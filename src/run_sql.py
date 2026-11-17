@@ -1,36 +1,42 @@
 
 import sqlite3
+import sys
 from pathlib import Path
 import pandas as pd
 
-# Project directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Database path
 DB_FILE = BASE_DIR / "data" / "garment_production.db"
 
-# SQL file path
-SQL_FILE = BASE_DIR / "sql" / "01_data_validation.sql"
+SQL_DIR = BASE_DIR / "sql"
 
-# Read SQL queries
+# Choose SQL file from terminal argument
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+else:
+    filename = "01_data_validation.sql"
+
+SQL_FILE = SQL_DIR / filename
+
+# Validate filename
+if Path(filename).name != filename:
+    raise ValueError("Provide a filename, not a path.")
+
+if not DB_FILE.exists():
+    raise FileNotFoundError("Database file not found.")
+
+if not SQL_FILE.exists():
+    raise FileNotFoundError(f"SQL file not found: {SQL_FILE}")
+
 sql_text = SQL_FILE.read_text(encoding="utf-8")
 
-# Split queries at semicolons
 queries = [
     query.strip()
     for query in sql_text.split(";")
     if query.strip()
 ]
 
-# Check database exists
-if not DB_FILE.exists():
-    raise FileNotFoundError(
-        "Database not found. Run create_database.py first."
-    )
-
-# Connect to database
 with sqlite3.connect(DB_FILE) as conn:
-
     for i, query in enumerate(queries, start=1):
 
         print(f"\nQUERY {i}")
